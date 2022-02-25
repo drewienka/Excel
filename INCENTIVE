@@ -1,0 +1,27 @@
+GIMINCENTIVE = LAMBDA(reportdate, dates, cashflows, hurdle, catchup, incentive1, [ratchet], [incentive2], 
+       
+    LET(
+        
+        proceeds, sumif(cashflows, ">0"),
+        cost, -sumif(cashflows, "<0"),
+        costxr, cost * ratchet,
+        dollarhurdle, -SUM(MAP(dates, cashflows, LAMBDA(dates, cashflows, -FV(hurdle, (reportdate-dates)/365, 0, cashflows) - cashflows))),
+                
+        investorlevel1, MIN(proceeds, cost + dollarhurdle),
+        gimlevel1, MIN(proceeds - investorlevel1, (dollarhurdle / (1 - incentive1)) * incentive1), 
+        residual1, MAX(0, proceeds - investorlevel1 - gimlevel1),
+        
+        investorlevel2, MIN(residual1 * (1 - incentive1), MAX(0, costxr - investorlevel1)),
+        gimlevel2, investorlevel2 / (1 - incentive1) * incentive1,
+        residual2, MAX(0, residual1 - investorlevel2 - gimlevel2),
+
+        investorlevel3, residual2 * (1 - incentive2),
+        gimlevel3, residual2 * incentive2,
+
+        gimtotal, gimlevel1 + gimlevel2 + gimlevel3,
+
+        gimtotal
+              
+    )
+    
+);
